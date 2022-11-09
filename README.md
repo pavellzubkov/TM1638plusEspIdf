@@ -1,5 +1,8 @@
 [![Website](https://img.shields.io/badge/Website-Link-blue.svg)](https://gavinlyonsrepo.github.io/)  [![Rss](https://img.shields.io/badge/Subscribe-RSS-yellow.svg)](https://gavinlyonsrepo.github.io//feed.xml)  [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/paypalme/whitelight976)
 
+This fork adapted for using Esp Idf framework without Arduino.
+---------------------------
+
 
 ![ module pics ](https://github.com/gavinlyonsrepo/TM1638plus/blob/master/extra/images/tm16383.jpg)
 
@@ -30,12 +33,8 @@ This library supports 3 different models, pictured above from left to right.
 
 * Tested on Development platforms: 
 
-1. Arduino UNO & NANO v3 .
-2. ATtiny85 .
-3. ESP32.
-4. STM32 STM32F103C8T6 "the blue pill".
-5. ESP8266.
-6. Teensy 4.0. (may not work at highest frequency see  notes section)
+1. ESP32.
+
 
 * History: see CHANGELOG.md in extra folder
 
