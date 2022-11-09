@@ -1,104 +1,215 @@
 /*
-* Project Name: TM1638plus 
-* File: TM1638plus.h
-* Description: TM1638plus.h header file arduino library for TM1638 module(LED & KEY). Model 1 & Model 3
+* Project Name: TM1638 
+ * Project Name: TM1638
+* Project Name: TM1638 
+* File: TM1638plus.cpp
+* Description: source file arduino  library for TM1638 module(LED & KEY). Model 1 & Model 3
 * Author: Gavin Lyons.
 * Created May 2019
 * URL: https://github.com/gavinlyonsrepo/TM1638plus
 */
 
-
-#ifndef TM1638PLUS_H
-#define TM1638PLUS_H
-
-#include "TM1638plus_common.h"
+#include "TM1638plus.h"
 
 
-class TM1638plus  {
+TM1638plus::TM1638plus(gpio_num_t strobe, gpio_num_t clock, gpio_num_t data) {
+  _STROBE_IO = strobe;
+  _DATA_IO = data;
+  _CLOCK_IO = clock; 
+}
 
-public:
-	// Constructor 
-	//Parameters 
-	// 1. strobe = GPIO STB pin
-	// 2. clock = GPIO CLK  pin
-	// 3. data = GPIO DIO pin
-	// 4. higfreq Changes the value of parameter _HIGH_FREQ which is default false
-	// This is used when running high freq MCU CPU (~>100Mhz) because of issues with button function.
-	// Pass true when running high freq MCU CPU (~>100Mhz).
-	TM1638plus(gpio_num_t strobe, gpio_num_t clock, gpio_num_t data);
-	
-	// Methods
-	
-	void displayBegin();	 // Begin method , sets pinmodes , Call in setup
-	
-	void reset(void);  // Reset / Clear module 
-	
-	//Sets the brightness level on a scale of brightness = 0 to 7.
-	//0 is not turned off, it's just the lowest brightness.
-	//If user wishes to change the default brightness at start-up change.
-	 //The DEFAULT_BRIGHTNESS define in header file.
-	void brightness(uint8_t brightness);
+void TM1638plus::displayBegin() {
+  TM_common.pinMode(_STROBE_IO , GPIO_MODE_OUTPUT);
+  TM_common.pinMode(_DATA_IO, GPIO_MODE_OUTPUT);
+  TM_common.pinMode(_CLOCK_IO , GPIO_MODE_OUTPUT);
+  sendCommand(TM_ACTIVATE);
+  brightness(TM_DEFAULT_BRIGHTNESS);
+  reset();
+}
 
-	//Read buttons returns a byte with value of buttons 1-8 b7b6b5b4b3b2b1b0
-	// 1 pressed, zero not pressed. 
-	//User may have to debounce buttons depending on application.
-	//See [URL LINK](https://github.com/gavinlyonsrepo/Arduino_Clock_3) 
-	// for de-bonce example.
-	uint8_t readButtons(void);
 
-	// Send Text to Seven segments, passed char array pointer
-	// dots are removed from string and dot on preceding digit switched on
-	// "abc.def" will be shown as "abcdef" with c decimal point turned on.
-	void displayText(const char *text);
+void TM1638plus::sendCommand(uint8_t value)
+{
+  TM_common.digitalWrite(_STROBE_IO, LOW);
+  sendData(value);
+  TM_common.digitalWrite(_STROBE_IO, HIGH);
+}
 
-	// Send ASCII value to seven segment, pass position 0-7 and ASCII value byte
-	void displayASCII(uint8_t position, uint8_t ascii);
+void TM1638plus::sendData(uint8_t data)
+{
+    TM_common.HighFreqshiftOut(_DATA_IO, _CLOCK_IO, LSBFIRST, data);
+}
 
-	// Same as displayASCII function but turns on dot/decimal point  as well 
-	void displayASCIIwDot(uint8_t position, uint8_t ascii) ;
+void TM1638plus::reset() {
+  sendCommand(TM_WRITE_INC); // set auto increment mode
+  TM_common.digitalWrite(_STROBE_IO, LOW);
+  sendData(TM_SEG_ADR);  // set starting address to
+  for (uint8_t i = 0; i < 16; i++)
+  {
+    sendData(0x00);
+  }
+   TM_common.digitalWrite(_STROBE_IO, HIGH);
+}
 
-	// Send HEX value to seven segment, pass position 0-7 and hex value(DEC) 0-15
-	void displayHex(uint8_t position, uint8_t hex);
+void TM1638plus::setLED(uint8_t position, uint8_t value)
+{
+  TM_common.pinMode(_DATA_IO, GPIO_MODE_OUTPUT);
+  sendCommand(TM_WRITE_LOC);
+  TM_common.digitalWrite(_STROBE_IO, LOW);
+  sendData(TM_LEDS_ADR + (position << 1));
+  sendData(value);
+  TM_common.digitalWrite(_STROBE_IO, HIGH);
+}
 
-	// Send seven segment value to seven segment
-	//  pass position 0-7 byte of data corresponding to segments (dp)gfedcba
-	// i.e 0b01000001 will set g and a on. 
-	void display7Seg(uint8_t position, uint8_t value);
-	
-	// Display an integer and leading zeros optional
-	// Param 1 :: integer to display 2^32 
-	// Param 2 :: bool leading zeros , true on , false off
-	// Param 3 :: enum text alignment , left or right alignment
-	void displayIntNum(unsigned long number, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
-	
-	// Divides the display into two nibbles and displays a Decimal number in each.
-	// takes in two numbers 0-9999 for each nibble ,
-	// and leading zeros optional
-	// Param 1 :: upper nibble integer 2^16 
-	// Param 2 :: lower nibble integer 2^16 
-	// Param 3 :: bool leading zeros , true on , false off
-	// Param 4 :: enum text alignment , left or right alignment
-	void DisplayDecNumNibble(uint16_t numberUpper, uint16_t numberLower, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
-	
-	// Set the LEDs. passed one  16bit integer.
-	// MODEL 3:
-	//MSB byte for the green LEDs, LS byte for the red LEDs (0xgreenred) 
-	//ie. 0xE007   1110 0000 0000 0111   results in L8-L0  GGGX XRRR, NOTE L8 is RHS on display
-	// MODEL 1:
-	// MSB byte 1 for  red LED , LSB byte n/a set to 0x00 (0xleds, 0xXX)
-	//i.e 0xF100  1111 0000 L8-L0 RRRRXXX0 NOTE  L8 is RHS on display
-	void setLEDs(uint16_t greenred);
+void TM1638plus::setLEDs(uint16_t ledvalues)
+{
+  for (uint8_t LEDposition = 0;  LEDposition < 8; LEDposition++) {
+    uint8_t colour = 0;
+
+    if ((ledvalues & (1 << LEDposition)) != 0) {
+      colour |= TM_RED_LED; //scan lower byte, set Red if one
+    } 
+
+    if ((ledvalues & (1 << (LEDposition + 8))) != 0) {
+      colour |= TM_GREEN_LED; //scan upper byte, set green if one
+    }
+
+    setLED(LEDposition, colour);
+  }
+}
+
+
+void TM1638plus::displayIntNum(unsigned long number, bool leadingZeros, AlignTextType_e TextAlignment)
+{
+  char values[TM_DISPLAY_SIZE + 1];
+  char TextDisplay[5] = "%";
+  char TextLeft[3] = "ld";
+  char TextRight[4] = "8ld";
+  
+  if (TextAlignment == TMAlignTextLeft)
+    {
+        strcat(TextDisplay ,TextLeft);  // %ld
+    }else if ( TextAlignment == TMAlignTextRight)
+    {
+        strcat(TextDisplay ,TextRight); // %8ld
+    }
+    
+  snprintf(values, TM_DISPLAY_SIZE + 1, leadingZeros ? "%08ld" : TextDisplay, number); 
+  displayText(values);
+}
+
+
+void TM1638plus::DisplayDecNumNibble(uint16_t  numberUpper, uint16_t numberLower, bool leadingZeros, AlignTextType_e TextAlignment )
+{
+    char valuesUpper[TM_DISPLAY_SIZE + 1];
+    char valuesLower[TM_DISPLAY_SIZE/2 + 1];
+    char TextDisplay[5] = "%";
+    char TextLeft[4] = "-4d";
+    char TextRight[3] = "4d";
+   
+     if (TextAlignment == TMAlignTextLeft)
+    {
+        strcat(TextDisplay ,TextLeft);  // %-4d
+    }else if ( TextAlignment == TMAlignTextRight)
+    {
+        strcat(TextDisplay ,TextRight); // %4d
+    }
+    
+    snprintf(valuesUpper, TM_DISPLAY_SIZE/2 + 1, leadingZeros ? "%04d" : TextDisplay, numberUpper);
+    snprintf(valuesLower, TM_DISPLAY_SIZE/2 + 1, leadingZeros ? "%04d" : TextDisplay, numberLower); 
+
+   strcat(valuesUpper ,valuesLower);
+   displayText(valuesUpper);
+}
+
+void TM1638plus::displayText(const char *text) {
+  char c, pos;
+  pos = 0;
+	  while ((c = (*text++)) && pos < TM_DISPLAY_SIZE)  {
+		if (*text == '.' && c != '.') {
+		  displayASCIIwDot(pos++, c);
+
+		  text++;
+		}  else {
+		  displayASCII(pos++, c);
+		}
+	  }
+}
+
+
+void TM1638plus::displayASCIIwDot(uint8_t position, uint8_t ascii) { 
+    // add 128 or 0x080 0b1000000 to turn on decimal point/dot in seven seg
+  display7Seg(position, SevenSeg[ascii - TM_ASCII_OFFSET] + TM_DOT_MASK_DEC);
+}
+
+void TM1638plus::display7Seg(uint8_t position, uint8_t value) { // call 7-segment
+  sendCommand(TM_WRITE_LOC);
+  TM_common.digitalWrite(_STROBE_IO, LOW);
+  sendData(TM_SEG_ADR + (position << 1));
+  sendData(value);
+  TM_common.digitalWrite(_STROBE_IO, HIGH); 
+}
+
+
+void TM1638plus::displayASCII(uint8_t position, uint8_t ascii) {
+  display7Seg(position, SevenSeg[ascii - TM_ASCII_OFFSET]);
+}
  
-	// Set an LED, pass it LED position 0-7 and value 0 or 1 , L1-L8
-	void setLED(uint8_t position, uint8_t value);
-	
-private:
-		gpio_num_t _STROBE_IO;
-		gpio_num_t _DATA_IO;
-		gpio_num_t _CLOCK_IO;
-		void sendCommand(uint8_t value);
-		void sendData(uint8_t  data);		
-		TM1638plus_common  TM_common;
-};
+void TM1638plus::displayHex(uint8_t position, uint8_t hex) 
+{
+    uint8_t offset = 0;
+    hex = hex % 16;
+    if (hex <= 9)
+    {
+        display7Seg(position, SevenSeg[hex + TM_HEX_OFFSET]);
+        // 16 is offset in reduced ASCII table for 0 
+    // 16 is offset in reduced ASCII table for 0
+        // 16 is offset in reduced ASCII table for 0 
+    }else if ((hex >= 10) && (hex <=15))
+    {
+        // Calculate offset in reduced ASCII table for AbCDeF
+        switch(hex) 
+        {
+         case 10: offset = 'A'; break;
+         case 11: offset = 'b'; break;
+         case 12: offset = 'C'; break;
+         case 13: offset = 'd'; break;
+         case 14: offset = 'E'; break;
+         case 15: offset = 'F'; break;
+        }
+        display7Seg(position, SevenSeg[offset-TM_ASCII_OFFSET]);
+    }
+    
+}
 
-#endif
+
+uint8_t TM1638plus::readButtons()
+{
+  uint8_t buttons = 0;
+  uint8_t v =0;
+  
+  TM_common.digitalWrite(_STROBE_IO, LOW);
+  sendData(TM_BUTTONS_MODE);
+  TM_common.pinMode(_DATA_IO, GPIO_MODE_INPUT);  
+
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    
+
+        v = TM_common.HighFreqshiftin(_DATA_IO, _CLOCK_IO, LSBFIRST) << i;
+ 
+    buttons |= v;
+  }
+
+  TM_common.pinMode(_DATA_IO, GPIO_MODE_OUTPUT);
+  TM_common.digitalWrite(_STROBE_IO, HIGH); 
+  return buttons;
+}
+
+
+void TM1638plus::brightness(uint8_t brightness)
+{
+    uint8_t  value = 0;
+    value = TM_BRIGHT_ADR + (TM_BRIGHT_MASK & brightness);
+    sendCommand(value);
+}
