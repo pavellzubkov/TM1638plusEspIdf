@@ -10,11 +10,10 @@
 #ifndef TM1638PLUS_COMMON_H
 #define TM1638PLUS_COMMON_H
 
-#if (ARDUINO >=100)
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
+
+#include <cstring>
+#include "driver/gpio.h"
+#include "rom/ets_sys.h"
 
 #define TM_ACTIVATE 0x8F // Start up
 #define TM_BUTTONS_MODE 0x42 // Buttons mode
@@ -36,7 +35,12 @@
 #define TM_OFF_LED 0x00
 
 #define TM_HFIN_DELAY   1 // uS Delay used by shiftIn function for High-freq MCU  
-#define TM_HFOUT_DELAY  1 // uS Delay used by shiftOut function for High-freq MCU   
+#define TM_HFOUT_DELAY  1 // uS Delay used by shiftOut function for High-freq MCU
+
+#define HIGH 1
+#define LOW 0
+
+#define LSBFIRST 1
 
 typedef enum 
 {
@@ -45,7 +49,7 @@ typedef enum
 }AlignTextType_e; // Alignment of text
 
 // font , map of ASCII values/table to 7-segment, offset to position 32. 
-const  PROGMEM unsigned char SevenSeg[] = {
+const unsigned char SevenSeg[] = {
   0x00, /* (space) */
   0x86, /* ! */
   0x22, /* " */
@@ -152,9 +156,13 @@ public:
 	TM1638plus_common();
 	
 	//  Used instead of arduino function "shiftin" when _HIGH_FREQ is set to true
-	uint8_t  HighFreqshiftin(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) ;
+	uint8_t  HighFreqshiftin(gpio_num_t dataPin, gpio_num_t clockPin, uint8_t bitOrder) ;
 	 //  Used instead of arduino function "shiftOut" when _HIGH_FREQ is set to true
-	void HighFreqshiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val);
+	void HighFreqshiftOut(gpio_num_t dataPin, gpio_num_t clockPin, uint8_t bitOrder, uint8_t val);
+  void pinMode(gpio_num_t pin,gpio_mode_t mode);
+  void digitalWrite(gpio_num_t pin,uint32_t level);
+  void delayMicroseconds(uint32_t usec);
+  int digitalRead(gpio_num_t pin);
 
 };
 
