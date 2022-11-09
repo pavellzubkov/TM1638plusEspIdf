@@ -11,14 +11,7 @@
 #ifndef TM1638PLUS_MODEL2_H
 #define TM1638PLUS_MODEL2_H
 
-#if (ARDUINO >=100)
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
-
 #include "TM1638plus_common.h"
- 
 
 class TM1638plus_Model2  {
 
@@ -32,7 +25,7 @@ public:
     // 5. high_freq Changes the value of parameter _HIGH_FREQ which is default false
     // This is used when running high freq MCU CPU (~>100Mhz) because of issues with button function.
     // Pass true when running high freq MCU CPU (~>100Mhz).
-    TM1638plus_Model2(uint8_t strobe, uint8_t clock, uint8_t data, bool swap_nibbles= false,bool high_freq = false);
+    TM1638plus_Model2(gpio_num_t strobe, gpio_num_t clock, gpio_num_t data, bool swap_nibbles= false,bool high_freq = false);
     
     // Methods
     
@@ -82,7 +75,7 @@ public:
     // Param 4 :: bool leading zeros , true on , false off
     // Param 5 :: enum text alignment , left or right alignment
     // converts to string internally
-    void DisplayHexNum(uint16_t  numberUpper, uint16_t numberLower, byte dots, boolean leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
+    void DisplayHexNum(uint16_t  numberUpper, uint16_t numberLower, unsigned char dots, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
     
     // Display a decimal number ,
     // Param 1 :: 2^32 unsigned long
@@ -90,12 +83,12 @@ public:
     // Param 3 :: leading zeros , true on , false off
     // Param 4 :: enum text alignment ,  left or right
     // converts to string internally
-    void DisplayDecNum(unsigned long number, byte dots, boolean leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
+    void DisplayDecNum(unsigned long number, unsigned char dots, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
 
     // Display a string , takes a string and byte for decimal point display
     // Takes in string , converts it to ASCII using the font and masks for the decimal point
     // Then passes array of eight ASCII bytes to DisplayValues function
-    void DisplayStr(const char* string, const word dots = 0);
+    void DisplayStr(const char* string, const uint16_t dots = 0);
    
     // Takes in Array of 8 ASCII bytes , Called from DisplayStr 
     // Scans each ASCII byte converts to array of 8 segment bytes where each byte represents a segment
@@ -105,7 +98,7 @@ public:
     // So "a" segment is turned on for all bytes and "b" is on for all except last digit.
     // The bits are  mapping below abcdefg(dp) = 01234567 ! 
     // see for mapping of seven segment to digit https://en.wikipedia.org/wiki/Seven-segment_display
-    void ASCIItoSegment(const byte values[]);
+    void ASCIItoSegment(const unsigned char values[]);
     
     //Divides the display into two nibbles and displays a Decimal number in each.
     // Param 1 :: upper nibble integer 2^16 
@@ -113,19 +106,19 @@ public:
     // Param 3 :: byte dots turn on decimal points
     // Param 4 :: bool leading zeros , true on , false off
     // Param 5 :: enum text alignment , left or right alignment
-    void DisplayDecNumNibble(uint16_t numberUpper, uint16_t numberLower, byte dots, boolean leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
+    void DisplayDecNumNibble(uint16_t numberUpper, uint16_t numberLower, unsigned char dots, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
     
     
 private:
        
         void sendCommand(uint8_t value);
         void sendData(uint8_t  data);
-        uint8_t _STROBE_IO;
-        uint8_t _DATA_IO;
-        uint8_t _CLOCK_IO;
+        gpio_num_t _STROBE_IO;
+        gpio_num_t _DATA_IO;
+        gpio_num_t _CLOCK_IO;
         bool _SWAP_NIBBLES= false;     
         //This is used when running high freq CPU because of issues with button function.
-        bool _HIGH_FREQ = false;  
+        bool _HIGH_FREQ = false;          
         TM1638plus_common  TM_common;
 };
  
