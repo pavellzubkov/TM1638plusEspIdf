@@ -11,12 +11,6 @@
 #ifndef TM1638PLUS_H
 #define TM1638PLUS_H
 
-#if (ARDUINO >=100)
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
-
 #include "TM1638plus_common.h"
 
 
@@ -31,7 +25,7 @@ public:
 	// 4. higfreq Changes the value of parameter _HIGH_FREQ which is default false
 	// This is used when running high freq MCU CPU (~>100Mhz) because of issues with button function.
 	// Pass true when running high freq MCU CPU (~>100Mhz).
-	TM1638plus(uint8_t strobe, uint8_t clock, uint8_t data, bool highfreq = false);
+	TM1638plus(gpio_num_t strobe, gpio_num_t clock, gpio_num_t data);
 	
 	// Methods
 	
@@ -75,7 +69,7 @@ public:
 	// Param 1 :: integer to display 2^32 
 	// Param 2 :: bool leading zeros , true on , false off
 	// Param 3 :: enum text alignment , left or right alignment
-	void displayIntNum(unsigned long number, boolean leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
+	void displayIntNum(unsigned long number, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
 	
 	// Divides the display into two nibbles and displays a Decimal number in each.
 	// takes in two numbers 0-9999 for each nibble ,
@@ -84,7 +78,7 @@ public:
 	// Param 2 :: lower nibble integer 2^16 
 	// Param 3 :: bool leading zeros , true on , false off
 	// Param 4 :: enum text alignment , left or right alignment
-	void DisplayDecNumNibble(uint16_t numberUpper, uint16_t numberLower, boolean leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
+	void DisplayDecNumNibble(uint16_t numberUpper, uint16_t numberLower, bool leadingZeros = true, AlignTextType_e = TMAlignTextLeft);
 	
 	// Set the LEDs. passed one  16bit integer.
 	// MODEL 3:
@@ -99,13 +93,11 @@ public:
 	void setLED(uint8_t position, uint8_t value);
 	
 private:
-		uint8_t _STROBE_IO;
-		uint8_t _DATA_IO;
-		uint8_t _CLOCK_IO;
+		gpio_num_t _STROBE_IO;
+		gpio_num_t _DATA_IO;
+		gpio_num_t _CLOCK_IO;
 		void sendCommand(uint8_t value);
-		void sendData(uint8_t  data);
-		//This is used when running high freq CPU 
-		bool _HIGH_FREQ = false;
+		void sendData(uint8_t  data);		
 		TM1638plus_common  TM_common;
 };
 
