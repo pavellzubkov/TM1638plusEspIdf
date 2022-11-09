@@ -15,7 +15,28 @@ TM1638plus_common::TM1638plus_common()
 	// Blank constructor
 }
 
-uint8_t  TM1638plus_common::HighFreqshiftin(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) 
+void TM1638plus_common::pinMode(gpio_num_t pin,gpio_mode_t mode){
+  gpio_reset_pin(pin);
+  gpio_set_direction(pin, mode);
+}
+
+void TM1638plus_common::digitalWrite(gpio_num_t pin,uint32_t level){
+ // gpio_reset_pin(pin);
+  gpio_set_direction(pin, GPIO_MODE_OUTPUT);
+  gpio_set_level(pin,level);
+}
+
+void TM1638plus_common::delayMicroseconds(uint32_t usec){
+  ets_delay_us(usec);
+}
+
+int TM1638plus_common::digitalRead(gpio_num_t pin){
+ // gpio_reset_pin(pin);
+  gpio_set_direction(pin, GPIO_MODE_INPUT);
+  return gpio_get_level(pin);
+}
+
+uint8_t  TM1638plus_common::HighFreqshiftin(gpio_num_t dataPin, gpio_num_t clockPin, uint8_t bitOrder) 
 {
     uint8_t value = 0;
     uint8_t i = 0;
@@ -36,7 +57,7 @@ uint8_t  TM1638plus_common::HighFreqshiftin(uint8_t dataPin, uint8_t clockPin, u
     return value;
 }
 
-void TM1638plus_common::HighFreqshiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
+void TM1638plus_common::HighFreqshiftOut(gpio_num_t dataPin, gpio_num_t clockPin, uint8_t bitOrder, uint8_t val)
 {
     uint8_t i;
 
